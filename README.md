@@ -12,3 +12,5 @@ Example:
 > NoNonsenseCurrencyConverter.get_converted_currency_value('USD', 'GBP', 10)
 => 5.93
 ```
+
+Please report any issues and I will fix them as soon as possible.
