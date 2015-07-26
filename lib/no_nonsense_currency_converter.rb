@@ -10,6 +10,9 @@ module NoNonsenseCurrencyConverter
   @@rate_hash   = {}
 
   def self.get_converted_currency_value(from_currency, to_currency, amount)
+    from_currency = from_currency.upcase
+    to_currency   = to_currency.upcase
+    return amount if from_currency == to_currency
     rate =
         if @@rate_hash[from_currency].try(:[], to_currency).present?
           @@rate_hash[from_currency][to_currency]
@@ -24,9 +27,9 @@ module NoNonsenseCurrencyConverter
   private
   def self.get_raw_data(from, to)
     # open("#{BASE_URL}#{CONVERTER_URL}?a=#{amount}&from=#{from.upcase}&to=#{to.upcase}")
-    uri  = URI("#{BASE_URL}#{CONVERTER_URL}?symbols=#{to.upcase}&base=#{from.upcase}")
+    uri  = URI("#{BASE_URL}#{CONVERTER_URL}?symbols=#{to}&base=#{from}")
     data = Net::HTTP.get(uri)
-    JSON.parse(data)['rates'][to.upcase]
+    JSON.parse(data)['rates'][to]
   end
 
   def self.get_final_parsed_amount(data)
