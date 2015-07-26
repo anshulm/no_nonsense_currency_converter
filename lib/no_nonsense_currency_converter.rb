@@ -2,27 +2,35 @@ require "no_nonsense_currency_converter/version"
 
 module NoNonsenseCurrencyConverter
 
-  BASE_URL      = 'https://www.google.com/'
-  CONVERTER_URL = 'finance/converter'
+  # BASE_URL      = 'https://www.google.com/'
+  BASE_URL      = 'https://api.fixer.io/'
+  CONVERTER_URL = 'latest'
+  # CONVERTER_URL = 'finance/converter'
 
-  @@rate_hash = {}
+  @@rate_hash   = {}
 
   def self.get_converted_currency_value(from_currency, to_currency, amount)
-    unless @@rate_hash[from_currency].try(:[], to_currency).try(:[], amount).present?
-      data             = get_raw_data(amount, from_currency, to_currency)
-      converted_amount = get_final_parsed_amount(data).to_f.round(2)
-      @@rate_hash.merge!(from_currency => { to_currency => { amount => converted_amount } })
-    end
-    @@rate_hash[from_currency][to_currency][amount]
+    rate =
+        if @@rate_hash[from_currency].try(:[], to_currency).present?
+          @@rate_hash[from_currency][to_currency]
+        else
+          conversion_rate = get_raw_data(from_currency, to_currency)
+          @@rate_hash.merge!(from_currency => { to_currency => conversion_rate })
+          conversion_rate
+        end
+    (rate * amount.to_f).to_f.round(2)
   end
 
   private
-
-  def self.get_raw_data(amount, from, to)
-    open("#{BASE_URL}#{CONVERTER_URL}?a=#{amount}&from=#{from.upcase}&to=#{to.upcase}")
+  def self.get_raw_data(from, to)
+    # open("#{BASE_URL}#{CONVERTER_URL}?a=#{amount}&from=#{from.upcase}&to=#{to.upcase}")
+    uri  = URI("#{BASE_URL}#{CONVERTER_URL}?symbols=#{to.upcase}&base=#{from.upcase}")
+    data = Net::HTTP.get(uri)
+    JSON.parse(data)['rates'][to.upcase]
   end
 
   def self.get_final_parsed_amount(data)
-    data.read.scan(/<span class=bld>(\d+\.?\d*) [A-Z]{3}<\/span>/).flatten.first
+    # data.read.scan(/<span class=bld>(\d+\.?\d*) [A-Z]{3}<\/span>/).flatten.first
+    JSON.parse(data)['rate']['']
   end
 end
