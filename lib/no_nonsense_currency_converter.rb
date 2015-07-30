@@ -9,16 +9,16 @@ module NoNonsenseCurrencyConverter
 
   @@rate_hash   = {}
 
-  def self.get_converted_currency_value(from_currency, to_currency, amount)
+  def self.get_converted_currency_value(from_currency, to_currency, amount, force=false)
     from_currency = from_currency.upcase
     to_currency   = to_currency.upcase
     return amount if from_currency == to_currency
     rate =
-        if @@rate_hash[from_currency].try(:[], to_currency).present?
+        if (@@rate_hash[from_currency].try(:[], to_currency).present?) && !force
           @@rate_hash[from_currency][to_currency]
         else
           conversion_rate = get_raw_data(from_currency, to_currency)
-          @@rate_hash.merge!(from_currency => { to_currency => conversion_rate })
+          @@rate_hash[from_currency].present? ? @@rate_hash[from_currency].merge!({ to_currency => conversion_rate }) : @@rate_hash[from_currency] = { to_currency => conversion_rate }
           conversion_rate
         end
     (rate * amount.to_f).to_f.round(2)
